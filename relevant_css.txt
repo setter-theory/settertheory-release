@@ -1,0 +1,491 @@
+      margin:0!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg svg{
+      width:126px!important;
+      height:126px!important;
+      min-width:126px!important;
+      min-height:126px!important;
+      max-width:126px!important;
+      max-height:126px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarWrap{
+      height:206px!important;
+      min-height:206px!important;
+      max-height:206px!important;
+    }
+
+    /* V150.47: restore the PDF ability-balance title and fill each setter chart card. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid{
+      align-items:stretch!important;
+      gap:7px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid > *{
+      height:100%!important;
+      min-height:0!important;
+      box-sizing:border-box!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRadar{
+      display:flex!important;
+      align-items:stretch!important;
+      justify-content:center!important;
+      transform:none!important;
+      margin:0!important;
+      padding:3px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar{
+      display:grid!important;
+      grid-template-rows:auto minmax(0,1fr)!important;
+      width:100%!important;
+      height:100%!important;
+      min-height:0!important;
+      padding:0!important;
+      background:transparent!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar .setterIqRadarTitle{
+      display:block!important;
+      margin:0 0 1px!important;
+      color:#0f172a!important;
+      -webkit-text-fill-color:#0f172a!important;
+      font-size:12px!important;
+      line-height:1.1!important;
+      font-weight:1000!important;
+      text-align:center!important;
+      opacity:1!important;
+      visibility:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar svg{
+      width:100%!important;
+      height:100%!important;
+      min-height:215px!important;
+      max-height:none!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterMiddleColumn{
+      display:flex!important;
+      flex-direction:column!important;
+      justify-content:space-between!important;
+      gap:4px!important;
+      padding:3px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut{
+      display:flex!important;
+      flex:1 1 auto!important;
+      min-height:0!important;
+      flex-direction:column!important;
+      justify-content:flex-start!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .tossPanel{
+      display:flex!important;
+      flex:1 1 auto!important;
+      min-height:0!important;
+      align-items:center!important;
+      justify-content:center!important;
+      gap:8px!important;
+      padding:0!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg svg{
+      width:126px!important;
+      height:126px!important;
+      min-width:126px!important;
+      flex-basis:126px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation{
+      display:flex!important;
+      flex-direction:column!important;
+      margin:0!important;
+      padding:3px 2px 2px 7px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation > h4{
+      flex:0 0 auto!important;
+      margin:0 0 3px!important;
+      font-size:12px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarWrap{
+      display:flex!important;
+      flex:1 1 auto!important;
+      min-height:0!important;
+      flex-direction:column!important;
+      justify-content:space-between!important;
+      gap:2px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarRow{
+      flex:1 1 0!important;
+      min-height:0!important;
+      margin:0!important;
+      padding:2px 3px!important;
+    }
+
+    .pdfPreviewBuildMarker{position:fixed!important;right:8px!important;bottom:8px!important;z-index:2147483647!important;padding:4px 7px!important;border-radius:7px!important;background:rgba(15,23,42,.92)!important;color:#fff!important;font-size:10px!important;font-weight:900!important;pointer-events:none!important;}
+    @media print{.pdfPreviewBuildMarker{display:none!important}}
+  
+
+    /* V150.49: match both setter cards to the approved layout and force the ability title white. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid{
+      grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,1.2fr)!important;
+      grid-template-rows:242px!important;
+      align-items:stretch!important;
+      gap:7px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid > *{
+      width:100%!important;
+      height:242px!important;
+      min-height:242px!important;
+      max-height:242px!important;
+      align-self:stretch!important;
+      box-sizing:border-box!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRadar{
+      display:flex!important;
+      align-items:stretch!important;
+      justify-content:center!important;
+      transform:none!important;
+      margin:0!important;
+      padding:3px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar{
+      position:relative!important;
+      display:block!important;
+      width:100%!important;
+      height:100%!important;
+      min-height:0!important;
+      padding:0!important;
+      background:transparent!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar .setterIqRadarTitle{
+      position:absolute!important;
+      z-index:10!important;
+      top:13px!important;
+      left:50%!important;
+      transform:translateX(-50%)!important;
+      display:block!important;
+      width:max-content!important;
+      margin:0!important;
+      padding:0!important;
+      color:#ffffff!important;
+      -webkit-text-fill-color:#ffffff!important;
+      font-size:12px!important;
+      line-height:1!important;
+      font-weight:1000!important;
+      text-align:center!important;
+      text-shadow:0 1px 2px rgba(15,23,42,.9)!important;
+      opacity:1!important;
+      visibility:visible!important;
+      pointer-events:none!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .pdfSetterIqRadar svg{
+      display:block!important;
+      width:100%!important;
+      height:238px!important;
+      min-height:238px!important;
+      max-height:238px!important;
+      margin:0!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg svg{
+      width:126px!important;
+      height:126px!important;
+      min-width:126px!important;
+      min-height:126px!important;
+      max-width:126px!important;
+      max-height:126px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarWrap{
+      height:206px!important;
+      min-height:206px!important;
+      max-height:206px!important;
+    }
+
+    /* V150.50: PDF preview only — force 能力バランス title to white. */
+    #report .setterIqRadarTitle,
+    #report #reportDashboard .setterIqRadarTitle,
+    #report #reportDashboard.pdfA4Document .setterIqRadarTitle{
+      color:#ffffff!important;
+      -webkit-text-fill-color:#ffffff!important;
+      opacity:1!important;
+    }
+
+    /* V150.51: PDF preview only — keep the “○本” labels clear of the rotation chart line. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarValues{
+      margin-top:5px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotValue{
+      grid-template-rows:auto auto!important;
+      row-gap:2px!important;
+      line-height:1.05!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotValue small{
+      position:relative!important;
+      top:2px!important;
+      line-height:1!important;
+    }
+
+    /* V150.53: PDF preview only — keep each S1–S6 divider below its labels. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarWrap{
+      gap:3px!important;
+      justify-content:flex-start!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarRow{
+      flex:0 0 31px!important;
+      height:31px!important;
+      min-height:31px!important;
+      margin:0!important;
+      padding:1px 3px 5px!important;
+      align-items:start!important;
+      box-sizing:border-box!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarMain{
+      min-height:25px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarValues{
+      margin-top:3px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotValue small{
+      top:0!important;
+    }
+
+    /* V150.54: PDF preview only — lower the divider by giving the count labels more vertical room. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarRow{
+      flex-basis:35px!important;
+      height:35px!important;
+      min-height:35px!important;
+      padding:1px 3px 9px!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarMain{
+      min-height:29px!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarValues{
+      margin-top:4px!important;
+      padding-bottom:2px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotValue small{
+      top:2px!important;
+    }
+
+
+    /* V150.55: PDF preview only — add one more step of clearance below the count labels. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarRow{
+      flex-basis:39px!important;
+      height:39px!important;
+      min-height:39px!important;
+      padding:1px 3px 13px!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarMain{
+      min-height:33px!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation .setterRotBarValues{
+      margin-top:4px!important;
+      padding-bottom:6px!important;
+    }
+
+
+    /* V150.60: PDF preview only — make the three setter-analysis subcards fill the parent card. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterCard{
+      display:grid!important;
+      grid-template-rows:auto minmax(0,1fr)!important;
+      gap:5px!important;
+      padding:5px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid.setterAnalysisSubcardGrid{
+      display:grid!important;
+      grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,1.18fr)!important;
+      grid-template-rows:minmax(0,1fr)!important;
+      gap:6px!important;
+      width:100%!important;
+      height:100%!important;
+      min-height:0!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:0!important;
+      align-items:stretch!important;
+      justify-items:stretch!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterBottomGrid.setterAnalysisSubcardGrid > .setterAnalysisSubcard{
+      display:flex!important;
+      flex-direction:column!important;
+      width:100%!important;
+      height:100%!important;
+      min-width:0!important;
+      min-height:0!important;
+      max-width:none!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:0!important;
+      align-self:stretch!important;
+      border-radius:12px!important;
+      overflow:hidden!important;
+      box-sizing:border-box!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisSubcardTitle{
+      flex:0 0 auto!important;
+      margin:0!important;
+      padding:7px 8px!important;
+      text-align:center!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisSubcardBody{
+      display:flex!important;
+      flex:1 1 auto!important;
+      flex-direction:column!important;
+      width:100%!important;
+      height:auto!important;
+      min-width:0!important;
+      min-height:0!important;
+      max-width:none!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:5px 7px 7px!important;
+      box-sizing:border-box!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisRadarCard .setterAnalysisSubcardBody{
+      align-items:stretch!important;
+      justify-content:center!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisTossCard .setterAnalysisSubcardBody,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisRotationCard .setterAnalysisSubcardBody{
+      justify-content:flex-start!important;
+    }
+
+    /* V150.68: match the exposed parent-card surfaces to the navy PDF-preview design.
+       Small cards, charts, values, and layout are unchanged. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisUnitBody,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterCard{
+      background:#2f394b!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .teamAnalysisCard,
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .teamAnalysisCard > .playOverviewCard{
+      background:#2f394b!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfAnalysisOuterCard,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsBlock,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRecentLogsBlock{
+      background:#2f394b!important;
+    }
+
+    /* V150.68: PDF final-page ranking text contrast. */
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsOuterCard,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsOuterCard *,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsBlock,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsBlock *,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .singleReportWideGrid,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .singleReportWideGrid *{
+      color:#ffffff!important;
+      -webkit-text-fill-color:#ffffff!important;
+    }
+
+
+    /* V150.68 final PDF-preview overrides: dark small cards, full-width analysis parent, unclipped toss donut. */
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisSubcard,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterTop,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRadar,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterMiddleColumn,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterRotation,
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .playOverviewPlay,
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .playOverviewMetrics,
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .playOverviewResult,
+    #report #reportDashboard.pdfA4Document > .pdfTeamPage .playOverviewRotation,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .compactRankCard,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .reportPanel,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .recentLogItem,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .timelineItem,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .timelineRow{
+      background:#1e293b!important;
+      background-color:#1e293b!important;
+      border-color:rgba(96,165,250,.32)!important;
+      color:#fff!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfFinalGrid,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfAnalysisOuterCard,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfAnalysisSection,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsBlock,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRecentLogsBlock,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .singleReportWideGrid,
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .setterUnifiedBottomGrid{
+      width:100%!important;
+      max-width:100%!important;
+      margin-left:0!important;
+      margin-right:0!important;
+      box-sizing:border-box!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfAnalysisOuterCard{
+      display:block!important;
+      min-height:186mm!important;
+      background:#2f394b!important;
+      padding:12px!important;
+      border-radius:16px!important;
+      overflow:hidden!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfAnalysisSection{
+      background:transparent!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRankingsBlock{
+      display:grid!important;
+      grid-template-columns:repeat(4,minmax(0,1fr))!important;
+      gap:7px!important;
+      background:transparent!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .compactRankCard{
+      min-width:0!important;
+      border:1px solid rgba(96,165,250,.32)!important;
+      border-radius:10px!important;
+      padding:7px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfFinalPage .pdfRecentLogsBlock{
+      background:transparent!important;
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisTossCard .setterAnalysisSubcardBody,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterMiddleColumn,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .tossPanel{
+      overflow:visible!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterAnalysisTossCard .setterAnalysisSubcardBody{
+      padding-top:10px!important;
+      padding-bottom:12px!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .tossPanel{
+      min-height:150px!important;
+      padding:8px 4px 10px!important;
+      align-items:center!important;
+    }
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg,
+    #report #reportDashboard.pdfA4Document > .pdfSetterPage .setterMasterDonut .pdfDonutSvg svg{
+      width:116px!important;
+      height:116px!important;
+      min-width:116px!important;
+      min-height:116px!important;
+      max-width:116px!important;
+      max-height:116px!important;
+      overflow:visible!important;
+    }
+
+</style><script src="https://unpkg.com/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script></head><body>
+    <div class="pdfPreviewTopbar"><b>Setter Theory PDFプレビュー</b><div><button class="secondary" onclick="window.close()">← レポートへ戻る</button><button id="pdfPrintButton" type="button">PDF／印刷</button></div></div>
+    <div class="pdfPreviewBuildMarker">V150.68</div>
+    <main class="pdfPreviewSheet"><section id="report" class="active">${a4Root.outerHTML}</section></main>
+</body></html>`;
+
+  // 元画面の開閉状態は変えずに戻す。
+  reportRankingsOpen=previousRankingsOpen;
+  reportRecentLogsOpen=previousRecentLogsOpen;
+  reportRecentLogsExpanded=previousRecentLogsExpanded;
+  report();
+
+  const w=window.open('', '_blank');
+  if(!w){ alert('ポップアップがブロックされました。ブラウザの設定で許可してください。'); return; }
