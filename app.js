@@ -1313,7 +1313,8 @@ function finishMatch(){
     },80);
   }catch(error){
     console.error('finish match save failed',error);
-    alert('試合の保存に失敗したため、終了していません。データは入力画面に残っています。');
+    const detail=String(error&&error.setterTheoryDetail||storageErrorLabel(error));
+    alert(`試合の保存に失敗したため、終了していません。\nデータは入力画面に残っています。\n\n原因：${detail}`);
   }
 }
 
@@ -1907,107 +1908,289 @@ function metricCard(label,value,sub,color,icon,pct){
   </div>`;
 }
 
-let reportRankType = localStorage.getItem("vollyzeReportRankType") || "スパイク";
-if(reportRankType === "トス") reportRankType = "スパイク";
-let reportSortType = localStorage.getItem("vollyzeReportSortType") || "rate";
+let reportPlayerOpenNumbers = new Set();
+let reportPlayerTabs = {};
 
-function refreshPersonalRanking(){
-  const host=document.getElementById("personalRankingHost");
-  if(host){
-    host.innerHTML=buildPersonalRanking();
+function reportPlayerNumbers(){
+  const nums=[];
+  const add=v=>{ const n=String(v??'').trim(); if(n && n!=='-' && !n.includes('→')) nums.push(n); };
+  (s.nums||[]).forEach(add);
+  Object.keys(s.players||{}).forEach(add);
+  (s.logs||[]).forEach(log=>{
+    add(log.num);
+    if(log.type==='交代'){
+      add(log.outNum); add(log.inNum);
+      const m=String(log.num||'').match(/^(.+?)→(.+)$/);
+      if(m){ add(m[1]); add(m[2]); }
+    }
+  });
+  Object.values(s.substitutionCounts||{}).forEach(x=>{ if(x){ add(x.a); add(x.b); } });
+  return [...new Set(nums)].sort((a,b)=>{
+    const an=Number(a), bn=Number(b);
+    if(Number.isFinite(an) && Number.isFinite(bn)) return an-bn;
+    return a.localeCompare(b,'ja');
+  });
+}
+function refreshPersonalAnalysis(){
+  const hosts=[...document.querySelectorAll('#personalRankingHost')];
+  if(hosts.length){
+    const html=buildPersonalRanking();
+    hosts.forEach(host=>{ host.innerHTML=html; });
   }else{
     report();
   }
 }
-function setReportRankType(value){
-  reportRankType = value;
-  localStorage.setItem("vollyzeReportRankType", value);
-  refreshPersonalRanking();
+function toggleReportPlayerAccordion(num){
+  num=String(num);
+  if(reportPlayerOpenNumbers.has(num)) reportPlayerOpenNumbers.delete(num);
+  else reportPlayerOpenNumbers.add(num);
+  refreshPersonalAnalysis();
 }
-function setReportSortType(value){
-  reportSortType = value;
-  localStorage.setItem("vollyzeReportSortType", value);
-  refreshPersonalRanking();
+function toggleAllReportPlayers(){
+  const nums=reportPlayerNumbers();
+  const allOpen=nums.length && nums.every(n=>reportPlayerOpenNumbers.has(String(n)));
+  reportPlayerOpenNumbers = allOpen ? new Set() : new Set(nums.map(String));
+  refreshPersonalAnalysis();
 }
+function setReportPlayerAccordionTab(num,value){
+  reportPlayerTabs[String(num)]=String(value||"overview");
+  refreshPersonalAnalysis();
+}
+function bindReportPlayerAnalysisEvents(){
+  if(window.__reportPlayerAnalysisBound) return;
+  window.__reportPlayerAnalysisBound=true;
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('[data-player-action]');
+    if(!btn) return;
+    if(!btn.closest('.playerAccordionList, .playerAnalysisHead')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const action=btn.dataset.playerAction;
+    if(action==='toggle-all') toggleAllReportPlayers();
+    else if(action==='toggle') toggleReportPlayerAccordion(btn.dataset.playerNum||'');
+    else if(action==='tab') setReportPlayerAccordionTab(btn.dataset.playerNum||'',btn.dataset.playerTab||'overview');
+  },false);
+}
+bindReportPlayerAnalysisEvents();
+function playerLogs(num,type){
+  return (s.logs||[]).filter(x=>String(x.num)===String(num) && (!type || x.type===type));
+}
+function signedRate(value){ return `${value>0?'+':''}${value}%`; }
+function countResult(logs,results){
+  const wanted=Array.isArray(results)?results:[results];
+  return logs.filter(x=>wanted.includes(x.result)).length;
+}
+function detailTable(headers,rows,empty='記録がありません'){
+  if(!rows.length) return `<div class="playerDetailEmpty">${empty}</div>`;
+  return `<div class="playerDetailTableWrap"><table class="playerDetailTable"><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((cell,i)=>`<${i?'td':'th'}>${cell}</${i?'td':'th'}>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function courtPositionLabel(pos){
+  return ({'1':'位置1','2':'位置2','3':'位置3','4':'位置4','5':'位置5','6':'位置6'})[String(pos)] || '位置不明';
+}
+function buildPlayerOverview(num){
+  const configs=[
+    ['スパイク','スパイク',x=>x.result==='成功','spike'],
+    ['サーブ','サーブ',x=>x.result==='成功'||x.result==='エース','serve'],
+    ['レセプション','レセプ',x=>['Aパス','Bパス','Cパス'].includes(x.result),'receive'],
+    ['ディグ','ディグ',x=>x.result==='成功','dig'],
+    ['ブロック','ブロック',x=>x.result==='シャット'||x.result==='ワンタッチ','block']
+  ];
+  return `<div class="playerOverviewGrid">${configs.map(([label,type,ok,tab])=>{
+    const logs=playerLogs(num,type), success=logs.filter(ok).length;
+    return `<button type="button" class="playerOverviewCard" data-player-action="tab" data-player-num="${escapeAttr(num)}" data-player-tab="${tab}"><span>${label}</span><b>${success}/${logs.length}</b><small>成功率 ${safePct(success,logs.length)}%　効果率 ${signedRate(effectRate(logs))}</small></button>`;
+  }).join('')}</div>`;
+}
+function buildPlayerSpike(num){
+  const logs=playerLogs(num,'スパイク');
+  const positions=['1','2','3','4','5','6'];
+  const rows=positions.map(pos=>{
+    const a=logs.filter(x=>String(x.pos)===pos); if(!a.length) return null;
+    const kill=countResult(a,'成功'), miss=countResult(a,'ミス'), blocked=countResult(a,'被ブロック');
+    return [courtPositionLabel(pos),a.length,kill,miss,blocked,`${safePct(kill,a.length)}%`,signedRate(effectRate(a))];
+  }).filter(Boolean);
+  if(logs.some(x=>!positions.includes(String(x.pos)))){
+    const a=logs.filter(x=>!positions.includes(String(x.pos)));
+    rows.push(['位置不明',a.length,countResult(a,'成功'),countResult(a,'ミス'),countResult(a,'被ブロック'),`${safePct(countResult(a,'成功'),a.length)}%`,signedRate(effectRate(a))]);
+  }
+  if(logs.length) rows.push(["合計",logs.length,countResult(logs,'成功'),countResult(logs,'ミス'),countResult(logs,'被ブロック'),`${safePct(countResult(logs,'成功'),logs.length)}%`,signedRate(effectRate(logs))]);
+  return detailTable(['打った位置','打数','得点','ミス','被ブロック','決定率','効果率'],rows,'スパイク記録がありません');
+}
+function buildPlayerRotationDetail(num,type){
+  const isReceive=type==='レセプ';
+  const rows=[1,2,3,4,5,6].map(r=>{
+    const a=playerLogs(num,type).filter(x=>x.rot===`S${r}`); if(!a.length) return null;
+    if(isReceive) return [`S${r}`,a.length,countResult(a,'Aパス'),countResult(a,'Bパス'),countResult(a,'Cパス'),countResult(a,['ミス','レセプミス']),signedRate(effectRate(a))];
+    return [`S${r}`,a.length,countResult(a,'成功'),countResult(a,'継続'),countResult(a,'ミス'),signedRate(effectRate(a))];
+  }).filter(Boolean);
+  const all=playerLogs(num,type);
+  if(all.length) rows.push(isReceive
+    ? ['合計',all.length,countResult(all,'Aパス'),countResult(all,'Bパス'),countResult(all,'Cパス'),countResult(all,['ミス','レセプミス']),signedRate(effectRate(all))]
+    : ['合計',all.length,countResult(all,'成功'),countResult(all,'継続'),countResult(all,'ミス'),signedRate(effectRate(all))]);
+  return isReceive
+    ? detailTable(['ローテ','本数','A','B','C','ミス','効果率'],rows,'レセプション記録がありません')
+    : detailTable(['ローテ','本数','成功','継続','ミス','効果率'],rows,'ディグ記録がありません');
+}
+function buildPlayerServe(num){
+  const logs=playerLogs(num,'サーブ');
+  const success=countResult(logs,'成功'), ace=countResult(logs,'エース'), miss=countResult(logs,'ミス');
+  return detailTable(['総本数','成功','エース','ミス','成功率','エース率','効果率'],logs.length?[[logs.length,success,ace,miss,`${safePct(success+ace,logs.length)}%`,`${safePct(ace,logs.length)}%`,signedRate(effectRate(logs))]]:[],'サーブ記録がありません');
+}
+function buildPlayerBlock(num){
+  const logs=playerLogs(num,'ブロック');
+  const resultOrder=['シャット','ワンタッチ','継続','ブロックミス','ミス'];
+  const rows=resultOrder.map(result=>[result,countResult(logs,result)]).filter(row=>row[1]>0);
+  const extras=[...new Set(logs.map(x=>x.result))].filter(x=>!resultOrder.includes(x));
+  extras.forEach(result=>rows.push([escapeHtml(result),countResult(logs,result)]));
+  if(logs.length) rows.push(['合計',logs.length]);
+  return detailTable(['判定','本数'],rows,'ブロック記録がありません');
+}
+function clampPlayerRate(v){
+  const n=Number(v)||0;
+  return Math.max(0,Math.min(100,n));
+}
+function playerRateBar(label,value,sub){
+  const v=clampPlayerRate(value);
+  return `<div class="playerRateRow"><div class="playerRateLabel"><span>${label}</span><b>${Math.round(value)}%</b></div><div class="playerRateTrack"><i style="width:${v}%"></i></div>${sub?`<small>${sub}</small>`:''}</div>`;
+}
+function playerMiniStats(items){
+  return `<div class="playerMiniStats">${items.map(([label,value])=>`<div><span>${label}</span><b>${value}</b></div>`).join('')}</div>`;
+}
+function playerPositionSummary(num){
+  const logs=playerLogs(num,'スパイク');
+  const positions=['1','2','3','4','5','6'];
+  const chips=positions.map(pos=>{
+    const a=logs.filter(x=>String(x.pos)===pos);
+    if(!a.length) return '';
+    return `<span>${courtPositionLabel(pos)} ${countResult(a,'成功')}/${a.length}</span>`;
+  }).filter(Boolean);
+  return chips.length?`<div class="playerDetailChips">${chips.join('')}</div>`:'';
+}
+function playerRotationSummary(num,type){
+  const chips=[1,2,3,4,5,6].map(r=>{
+    const a=playerLogs(num,type).filter(x=>x.rot===`S${r}`);
+    if(!a.length) return '';
+    let good=0;
+    if(type==='レセプ') good=countResult(a,['Aパス','Bパス']);
+    else good=countResult(a,['成功','継続']);
+    return `<span>S${r} ${good}/${a.length}</span>`;
+  }).filter(Boolean);
+  return chips.length?`<div class="playerDetailChips">${chips.join('')}</div>`:'';
+}
+function buildPlayerDashboard(num){
+  const spike=playerLogs(num,'スパイク');
+  const serve=playerLogs(num,'サーブ');
+  const receive=playerLogs(num,'レセプ');
+  const dig=playerLogs(num,'ディグ');
+  const block=playerLogs(num,'ブロック');
+  const all=[...spike,...serve,...receive,...dig,...block];
 
-function safePct(part,total){ return total ? Math.round(part/total*100) : 0; }
-function cssClassByPct(pct){ if(pct>=70)return ""; if(pct>=50)return "mid"; return "bad"; }
-function donutStyle(items){
-  const total=items.reduce((a,x)=>a+x.count,0) || 1;
-  let deg=0;
-  const parts=items.map(x=>{const st=deg; deg += x.count/total*360; return `${x.color} ${st}deg ${deg}deg`;});
-  return `conic-gradient(${parts.join(",")})`;
-}
-function legendHtml(items,total){
-  return `<div class="legend">`+items.map(x=>{
-    const pct=safePct(x.count,total);
-    return `<div class="legendRow"><span class="dot" style="background:${x.color}"></span><span>${x.label}</span><span>${pct}% (${x.count})</span></div>`;
-  }).join("")+`</div>`;
-}
-function metricCard(label,value,sub,color,icon,pct){
-  const c=color==='blue'?'#2563eb':color==='red'?'#dc2626':color==='green'?'#16a34a':color==='orange'?'#f97316':'#7c3aed';
-  return `<div class="statCard">
-    <div class="statTop"><span class="statIcon">${icon}</span><span>${label}</span></div>
-    <div class="statValue ${color}">${value}</div>
-    <div class="miniTrack">
-      <div class="miniFill" style="width:${Math.max(0,Math.min(100,pct||0))}%;background:${c}"></div>
-      <div class="barValue">${value}</div>
+  const spikeKills=countResult(spike,'成功');
+  const spikeMiss=countResult(spike,'ミス');
+  const spikeBlocked=countResult(spike,'被ブロック');
+  const serveAce=countResult(serve,'エース');
+  const serveGood=countResult(serve,['成功','エース']);
+  const serveMiss=countResult(serve,'ミス');
+  const recA=countResult(receive,'Aパス');
+  const recB=countResult(receive,'Bパス');
+  const recC=countResult(receive,'Cパス');
+  const recMiss=countResult(receive,['ミス','レセプミス']);
+  const digSuccess=countResult(dig,'成功');
+  const digContinue=countResult(dig,'継続');
+  const digMiss=countResult(dig,'ミス');
+  const blockPoint=countResult(block,'シャット');
+  const blockTouch=countResult(block,'ワンタッチ');
+  const blockContinue=countResult(block,'継続');
+  const blockMiss=countResult(block,['ブロックミス','ミス']);
+
+  const points=spikeKills+serveAce+blockPoint;
+  const positives=spikeKills+serveGood+recA+recB+recC+digSuccess+digContinue+blockPoint+blockTouch+blockContinue;
+  const errors=spikeMiss+serveMiss+recMiss+digMiss+blockMiss;
+  const spikeRate=safePct(spikeKills,spike.length);
+  const serveRate=safePct(serveGood,serve.length);
+  const receiveRate=safePct(recA+recB,receive.length);
+  const digRate=safePct(digSuccess+digContinue,dig.length);
+  const blockRate=safePct(blockPoint+blockTouch,block.length);
+
+  const hasAny=all.length>0;
+  if(!hasAny) return `<div class="playerDetailEmpty">この選手のプレー記録がありません</div>`;
+
+  return `<div class="playerDashboard">
+    <div class="playerHeadlineStats">
+      <div><span>総プレー</span><b>${all.length}</b><small>本</small></div>
+      <div><span>得点</span><b>${points}</b><small>点</small></div>
+      <div><span>良いプレー</span><b>${positives}</b><small>本</small></div>
+      <div><span>ミス</span><b>${errors}</b><small>本</small></div>
     </div>
-    <div class="statSub">${sub}</div>
+    <div class="playerPerformanceGrid">
+      <section class="playerPerformanceCard">
+        <h4>スパイク</h4>
+        ${playerRateBar('決定率',spikeRate,`効果率 ${signedRate(effectRate(spike))}`)}
+        ${playerMiniStats([['打数',spike.length],['得点',spikeKills],['ミス',spikeMiss],['被ブロック',spikeBlocked]])}
+        ${playerPositionSummary(num)}
+      </section>
+      <section class="playerPerformanceCard">
+        <h4>サーブ</h4>
+        ${playerRateBar('成功率',serveRate,`効果率 ${signedRate(effectRate(serve))}`)}
+        ${playerMiniStats([['本数',serve.length],['エース',serveAce],['成功',countResult(serve,'成功')],['ミス',serveMiss]])}
+      </section>
+      <section class="playerPerformanceCard">
+        <h4>レセプション</h4>
+        ${playerRateBar('A・B率',receiveRate,`効果率 ${signedRate(effectRate(receive))}`)}
+        ${playerMiniStats([['本数',receive.length],['A',recA],['B',recB],['C',recC],['ミス',recMiss]])}
+        ${playerRotationSummary(num,'レセプ')}
+      </section>
+      <section class="playerPerformanceCard">
+        <h4>ディグ</h4>
+        ${playerRateBar('返球率',digRate,`効果率 ${signedRate(effectRate(dig))}`)}
+        ${playerMiniStats([['本数',dig.length],['成功',digSuccess],['継続',digContinue],['ミス',digMiss]])}
+        ${playerRotationSummary(num,'ディグ')}
+      </section>
+      <section class="playerPerformanceCard playerPerformanceCardWide">
+        <h4>ブロック</h4>
+        ${playerRateBar('得点・ワンタッチ率',blockRate,`効果率 ${signedRate(effectRate(block))}`)}
+        ${playerMiniStats([['本数',block.length],['得点',blockPoint],['ワンタッチ',blockTouch],['継続',blockContinue],['ミス',blockMiss]])}
+      </section>
+    </div>
   </div>`;
 }
-function rankConfig(type){
-  const map={
-    "スパイク":{title:"スパイク決定率ランキング", success:"決定数", total:"打数", rate:"決定率", note:"決定率 ＝ スパイク成功 ÷ スパイク打数", ok:x=>x.type==="スパイク"&&x.result==="成功", all:x=>x.type==="スパイク"},
-    "サーブ":{title:"サーブ成功率ランキング", success:"成功数", total:"総数", rate:"成功率", note:"成功率 ＝ サーブ成功＋サービスエース ÷ サーブ総数", ok:x=>x.type==="サーブ"&&(x.result==="成功"||x.result==="エース"), all:x=>x.type==="サーブ"},
-    "レセプ":{title:"レセプション成功率ランキング", success:"成功数", total:"総数", rate:"成功率", note:"成功率 ＝ Aパス＋Bパス＋Cパス ÷ レセプ総数", ok:x=>x.type==="レセプ"&&(x.result==="Aパス"||x.result==="Bパス"||x.result==="Cパス"), all:x=>x.type==="レセプ"},
-    "ディグ":{title:"ディグ成功率ランキング", success:"成功数", total:"総数", rate:"成功率", note:"成功率 ＝ ディグ成功 ÷ ディグ総数", ok:x=>x.type==="ディグ"&&x.result==="成功", all:x=>x.type==="ディグ"},
-    "ブロック":{title:"ブロック成功率ランキング", success:"成功数", total:"総数", rate:"成功率", note:"成功率 ＝ シャット＋ワンタッチ ÷ ブロック総数", ok:x=>x.type==="ブロック"&&(x.result==="シャット"||x.result==="ワンタッチ"), all:x=>x.type==="ブロック"}
-  };
-  return map[type] || map["スパイク"];
+function buildPlayerAccordion(num){
+  num=String(num);
+  const open=reportPlayerOpenNumbers.has(num);
+  const name=getPlayerName(num)||'';
+  return `<section class="playerAccordion ${open?'open':''}">
+    <button type="button" class="playerAccordionToggle" data-player-action="toggle" data-player-num="${escapeAttr(num)}">
+      <span><b>No.${escapeHtml(num)}</b>${name?`<small>${escapeHtml(name)}</small>`:''}</span><strong>${open?'▲':'▼'}</strong>
+    </button>
+    ${open?`<div class="playerAccordionBody">${buildPlayerDashboard(num)}</div>`:''}
+  </section>`;
 }
 function buildPersonalRanking(){
-  const cfg=rankConfig(reportRankType);
-  const nums=[...new Set(s.nums.concat(s.logs.map(x=>x.num)).filter(n=>n && n!=="-"))].sort((a,b)=>Number(a)-Number(b));
-  let rows=nums.map(n=>{
-    const all=s.logs.filter(x=>String(x.num)===String(n) && cfg.all(x));
-    const ok=all.filter(cfg.ok).length;
-    const pct=safePct(ok,all.length);
-    return {n,name:getPlayerName(n)||`${n}番`, ok,total:all.length,pct};
-  });
-  rows.sort((a,b)=>{
-    if(reportSortType==="success") return b.ok-a.ok || b.pct-a.pct || b.total-a.total || Number(a.n)-Number(b.n);
-    if(reportSortType==="tries") return b.total-a.total || b.pct-a.pct || b.ok-a.ok || Number(a.n)-Number(b.n);
-    return b.pct-a.pct || b.ok-a.ok || b.total-a.total || Number(a.n)-Number(b.n);
-  });
-  const list=rows.map((r,i)=>`
-    <div class="bigBarRow">
-      <div class="bigBarRank">${i+1}</div>
-      <div class="bigBarName">${r.n} ${r.name}</div>
-      <div class="bigBarNum">${r.ok}</div>
-      <div class="bigBarNum">${r.total}</div>
-      <div class="bigBarTrack"><div class="bigBarFill" style="width:${r.pct}%"></div></div>
-      <div class="bigBarBadge ${cssClassByPct(r.pct)}">${r.pct}%</div>
-    </div>`).join("");
-  return `<div class="rankControls">
-    <div><label>表示項目</label><br><select id="rankTypeSelect" onchange="setReportRankType(this.value)" oninput="setReportRankType(this.value)">
-      ${["スパイク","サーブ","レセプ","ディグ","ブロック"].map(t=>`<option value="${t}" ${reportRankType===t?"selected":""}>${rankConfig(t).title}</option>`).join("")}
-    </select></div>
-    <div><label>並び替え</label><br><select id="rankSortSelect" onchange="setReportSortType(this.value)" oninput="setReportSortType(this.value)">
-      <option value="rate" ${reportSortType==="rate"?"selected":""}>成功率順</option>
-      <option value="success" ${reportSortType==="success"?"selected":""}>成功数順</option>
-      <option value="tries" ${reportSortType==="tries"?"selected":""}>試行数順</option>
-    </select></div>
-  </div>
-  <h3>個人成績 <small>（${cfg.title}）</small></h3>
-  <div class="bigBarRow" style="font-size:12px;color:var(--muted);font-weight:1000">
-    <div>順位</div><div>選手</div><div>${cfg.success}</div><div>${cfg.total}</div><div></div><div>${cfg.rate}</div>
-  </div>
-  <div class="bigBars">${list}</div>
-  <div class="rankNote">※ ${cfg.note}</div>`;
+  const nums=reportPlayerNumbers();
+  if(!nums.length) return `<h3>個人成績</h3><div class="playerDetailEmpty">選手のプレー記録がありません</div>`;
+  const allOpen=nums.every(n=>reportPlayerOpenNumbers.has(String(n)));
+  return `<div class="playerAnalysisHead"><div><span>PLAYER ANALYSIS</span><h3>個人成績</h3></div><button type="button" class="playerAllToggle" data-player-action="toggle-all" onclick="toggleAllReportPlayers(); return false;">${allOpen?'全閉じ':'全表示'}</button></div>
+    <div class="playerAccordionList">${nums.map(buildPlayerAccordion).join('')}</div>`;
 }
 
-
+let reportRankingsOpen=false;
+let reportRecentLogsOpen=true;
+let reportRecentLogsExpanded=false;
+let importedReportRankingsOpen=false;
+let importedReportRecentLogsOpen=true;
+let importedReportRecentLogsExpanded=false;
+function toggleReportRankings(){ reportRankingsOpen=!reportRankingsOpen; report(); }
+function toggleImportedReportRankings(){ importedReportRankingsOpen=!importedReportRankingsOpen; if(importedCsv) renderCsvAnalysis(importedCsv); }
+function toggleImportedReportRecentSection(){ importedReportRecentLogsOpen=!importedReportRecentLogsOpen; if(importedCsv) renderCsvAnalysis(importedCsv); }
+function toggleImportedReportRecentLogs(){ importedReportRecentLogsExpanded=!importedReportRecentLogsExpanded; if(importedCsv) renderCsvAnalysis(importedCsv); }
+function toggleReportRecentSection(){ reportRecentLogsOpen=!reportRecentLogsOpen; report(); }
+function toggleReportRecentLogs(){ reportRecentLogsExpanded=!reportRecentLogsExpanded; report(); }
+function buildRecentReportLogs(){
+  const source=reportRecentLogsExpanded?s.logs.slice(-20):s.logs.slice(-5);
+  const iconFor=x=>{if(isMissResult(x)) return ["×","tMiss"]; if(x.result==="被ブロック") return ["△","tBlock"]; if(x.result==="継続") return ["−","tCont"]; return ["○","tSuccess"];};
+  const items=source.map(x=>{const [ic,cls]=iconFor(x);return `<div class="timelineItem"><div class="timelineNo">${x.no}</div><div class="timelineIcon ${cls}">${ic}</div><div class="timelineText">${effectivePlayType(x)}${isTossMissLog(x)?"・ミス":""}</div></div>`;}).join('');
+  const canExpand=s.logs.length>5;
+  return `<div class="timeline">${items}</div>${canExpand?`<button class="recentLogToggle" onclick="toggleReportRecentLogs()">${reportRecentLogsExpanded?'5件表示に戻す':'すべて表示'}</button>`:''}<div class="logLegend"><span>🟢 成功系</span><span>🔵 継続</span><span>🔴 ミス</span><span>🟠 被ブロック</span></div>`;
+}
 function buildRotationPointAnalysis(){
   const rows=[1,2,3,4,5,6].map(r=>{
     const key="S"+r;
@@ -3140,30 +3323,61 @@ function getSavedMatches(){
   }
   return list;
 }
+function storageErrorLabel(error){
+  const name=String(error&&error.name||'Error');
+  const message=String(error&&error.message||'保存処理でエラーが発生しました');
+  if(name==='QuotaExceededError' || /quota|storage/i.test(message)) return '保存容量が上限に達しています（QuotaExceededError）';
+  if(/JSON|circular/i.test(message)) return '保存データの変換に失敗しました';
+  return `${name}: ${message}`;
+}
 function setSavedMatches(list){
   const normalized=(list||[]).map(migrateSavedMatchIdentities);
   const savedAt=new Date().toISOString();
   const serialized=JSON.stringify(normalized);
   const backupSerialized=JSON.stringify({savedAt,list:normalized});
-  // App-internal storage is the main record. The second key is an automatic recovery copy,
-  // so users do not need to export a CSV after every match.
-  localStorage.setItem(savedMatchesKey(),serialized);
-  localStorage.setItem(savedMatchesBackupKey(),backupSerialized);
+  const sizeKb=Math.max(1,Math.ceil(new Blob([serialized]).size/1024));
+  let backupSaved=false;
+
+  // V150.288: バックアップの二重保存が容量を圧迫して新規試合保存まで失敗しないよう、
+  // 先に古いバックアップを解放して主データを最優先で保存する。
+  try{ localStorage.removeItem(savedMatchesBackupKey()); }catch(_error){}
+
+  try{
+    localStorage.setItem(savedMatchesKey(),serialized);
+  }catch(error){
+    console.error('saved match primary write failed',error,{sizeKb,count:normalized.length});
+    error.setterTheoryDetail=`${storageErrorLabel(error)} / 保存データ約${sizeKb}KB / ${normalized.length}試合`;
+    throw error;
+  }
+
   try{
     const verified=JSON.parse(localStorage.getItem(savedMatchesKey())||'null');
     if(!Array.isArray(verified) || verified.length!==normalized.length) throw new Error('saved match verification failed');
   }catch(error){
     console.error('saved match verification failed',error);
+    error.setterTheoryDetail=`保存後の確認に失敗しました / 保存データ約${sizeKb}KB / ${normalized.length}試合`;
     throw error;
   }
-  updateSavedMatchBackupState(savedAt);
+
+  // 主データ保存後、空き容量がある場合だけ自動バックアップを作成する。
+  // バックアップ失敗は試合保存失敗として扱わず、主データを保持する。
+  try{
+    localStorage.setItem(savedMatchesBackupKey(),backupSerialized);
+    backupSaved=true;
+  }catch(error){
+    console.warn('saved match backup skipped',error,{sizeKb,count:normalized.length});
+  }
+  updateSavedMatchBackupState(savedAt,backupSaved,sizeKb);
 }
-function updateSavedMatchBackupState(savedAt){
+function updateSavedMatchBackupState(savedAt,backupSaved=true,sizeKb=0){
   const el=document.getElementById('savedMatchBackupState');
   if(!el) return;
   const d=savedAt?new Date(savedAt):null;
   const time=d&&!Number.isNaN(d.getTime())?`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'';
-  el.textContent=time?`アプリ内自動バックアップ済み ${time}`:'アプリ内自動バックアップ有効';
+  if(!time){ el.textContent='アプリ内保存有効'; return; }
+  el.textContent=backupSaved
+    ? `アプリ内保存・自動バックアップ済み ${time}`
+    : `アプリ内保存済み ${time}（容量節約のため予備バックアップ省略${sizeKb?`・約${sizeKb}KB`:''}）`;
 }
 function suggestedMatchName(){
   const d=new Date();
@@ -3397,10 +3611,46 @@ function renderSavedMatches(){
 }
 
 function matchOptionLabel(m){
-  const d=m.savedAt ? new Date(m.savedAt) : new Date();
+  const info=compareMatchInfo(m);
+  return `${info.date}｜${info.match}｜${info.setter}｜IQ ${info.iq}`;
+}
+function compareMatchInfo(m){
+  const d=m&&m.savedAt ? new Date(m.savedAt) : new Date();
   const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-  const iq=(m.summary && m.summary.setterIq) ? m.summary.setterIq : '-';
-  return `${date}｜${m.title || m.fileName || '無題'}｜IQ ${iq}`;
+  const title=String((m&&(m.title||m.fileName))||'無題の試合').replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '').replace(/\.csv$/i,'').replace(/_/g,' ');
+  const state=(m&&m.liveState)||{};
+  const setterNums=(state.setterNums||[]).map(String).filter(Boolean);
+  const names=setterNums.map(n=>String((state.players||{})[n]||'').trim()).filter(Boolean);
+  let setter=names.length ? `セッター：${names.join('・')}` : 'セッター：記録なし';
+  const iq=(m&&m.summary&&Number.isFinite(Number(m.summary.setterIq))) ? Math.round(Number(m.summary.setterIq)) : '--';
+  const total=(m&&m.summary&&Number(m.summary.total))||0;
+  return {date,match:title,setter,iq,total};
+}
+function compareCardHtml(m){
+  if(!m) return '<span class="compareCardEmpty">試合を選択してください</span>';
+  const info=compareMatchInfo(m);
+  return `<span class="compareCardDate">📅 ${escapeHtml(info.date)}</span><span class="compareCardMatch">🏐 ${escapeHtml(info.match)}</span><span class="compareCardMeta">👤 ${escapeHtml(info.setter)}　・　IQ ${info.iq}　・　トス ${info.total}本</span>`;
+}
+function renderComparePicker(side,list,selectedId){
+  const card=document.getElementById(side==='from'?'compareFromCard':'compareToCard');
+  const panel=document.getElementById(side==='from'?'compareFromList':'compareToList');
+  const selected=list.find(m=>String(m.id)===String(selectedId));
+  if(card) card.innerHTML=compareCardHtml(selected);
+  if(panel) panel.innerHTML=list.map(m=>`<button type="button" class="compareChoice ${String(m.id)===String(selectedId)?'selected':''}" onclick="selectCompareMatch('${side}','${m.id}')">${compareCardHtml(m)}</button>`).join('');
+}
+function toggleComparePicker(side){
+  const panel=document.getElementById(side==='from'?'compareFromList':'compareToList');
+  const other=document.getElementById(side==='from'?'compareToList':'compareFromList');
+  if(other) other.hidden=true;
+  if(panel) panel.hidden=!panel.hidden;
+}
+function selectCompareMatch(side,id){
+  const select=document.getElementById(side==='from'?'compareFrom':'compareTo');
+  if(select) select.value=id;
+  const list=getSavedMatches();
+  renderComparePicker(side,list,id);
+  const panel=document.getElementById(side==='from'?'compareFromList':'compareToList');
+  if(panel) panel.hidden=true;
 }
 function renderCompareSelectors(){
   const from=document.getElementById('compareFrom');
@@ -3410,15 +3660,20 @@ function renderCompareSelectors(){
   if(!from || !to) return;
   const list=getSavedMatches();
   if(count) count.textContent=`保存 ${list.length}件`;
+  const previousFrom=from.value, previousTo=to.value;
   const opts=list.map(m=>`<option value="${m.id}">${escapeHtml(matchOptionLabel(m))}</option>`).join('');
   from.innerHTML=opts;
   to.innerHTML=opts;
   if(list.length>=2){
-    from.value=list[1].id;
-    to.value=list[0].id;
+    from.value=list.some(m=>String(m.id)===String(previousFrom))?previousFrom:list[1].id;
+    to.value=list.some(m=>String(m.id)===String(previousTo))?previousTo:list[0].id;
+    renderComparePicker('from',list,from.value);
+    renderComparePicker('to',list,to.value);
     if(result && (!result.dataset.touched)) compareSavedMatches();
   }else{
-    if(result) result.innerHTML='<div class="csvSmall">保存した試合が2件以上あると比較できます。まずCSV解析後に「この試合を保存」を押してください。</div>';
+    renderComparePicker('from',list,list[0]&&list[0].id);
+    renderComparePicker('to',list,'');
+    if(result) result.innerHTML='<div class="csvSmall">保存した試合が2件以上あると比較できます。</div>';
   }
 }
 function pctFromSummary(summary,label){
@@ -4137,7 +4392,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 
-// v17 CSV読み込み
+// v17 📥 試合データを取り込む
 let importedCsv = null;
 
 function parseCSVText(text){
@@ -4195,7 +4450,7 @@ function renderCsvPreview(parsed, fileName){
   const rows = parsed.data || [];
   const headers = parsed.headers || [];
 
-  status.innerHTML = `✅ 読み込み完了：${escapeHtml(fileName)}<div class="csvSmall">列数 ${headers.length} / データ行 ${rows.length}</div>`;
+  status.innerHTML = `✅ ${escapeHtml(fileName)}（選択済み）<div class="csvSmall">列数 ${headers.length} / データ行 ${rows.length}</div>`;
 
   if(!headers.length){
     box.style.display = "block";
@@ -4317,7 +4572,7 @@ function setupCsvImport(){
       importedCsv = null;
       localStorage.removeItem("vollyzeImportedCsv");
       if(input) input.value = "";
-      if(status) status.textContent = "未読み込み";
+      if(status) status.textContent = "データ未選択";
       if(box){ box.style.display = "none"; box.innerHTML = ""; }
       renderCsvAnalysis(null);
     });

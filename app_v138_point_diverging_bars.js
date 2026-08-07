@@ -4026,7 +4026,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 
-// v17 CSV読み込み
+// v17 📥 試合データを取り込む
 let importedCsv = null;
 
 function parseCSVText(text){

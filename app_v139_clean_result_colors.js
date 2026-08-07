@@ -1270,6 +1270,7 @@ function archiveFinishedCurrentMatch(){
       terminalCounts:analysis.terminalCounts, usedFallback:analysis.usedFallback
     },
     liveState:JSON.parse(JSON.stringify({...s,hist:[]})),
+    finalScore:{my:Number(s.my||0),op:Number(s.op||0)},
     dataVersion:DATA_SCHEMA_VERSION, schemaVersion:DATA_SCHEMA_VERSION,
     userId:s.userId, teamId:s.teamId, matchId:s.matchId, setId:s.setId,
     playerIdentities:{...(s.playerIdentities||{})}
@@ -3168,6 +3169,59 @@ function showRestoredFullReport(payload,title='試合レポート') {
   }
 }
 
+function savedMatchScoreFromRows(match){
+  try{
+    const parsed=recoveryNormalizePayload(match&& (match.csv||match.parsed||match.data||match),match&& (match.fileName||match.title)||'保存試合');
+    const rows=Array.isArray(parsed.data)?parsed.data:[];
+    let best=null;
+    rows.forEach(row=>{
+      const raw=recoveryCell(row,['Score','スコア','得点']);
+      const m=String(raw||'').match(/(\d+)\s*[-―ー－]\s*(\d+)/);
+      if(!m) return;
+      const score={my:Number(m[1]),op:Number(m[2])};
+      if(!best || (score.my+score.op)>(best.my+best.op)) best=score;
+    });
+    return best;
+  }catch(_){ return null; }
+}
+function savedMatchFinalScore(match){
+  if(!match || typeof match!=='object') return null;
+  const candidates=[];
+  const direct=match.finalScore;
+  if(direct && Number.isFinite(Number(direct.my)) && Number.isFinite(Number(direct.op))) candidates.push({my:Number(direct.my),op:Number(direct.op)});
+  const live=match.liveState;
+  if(live && Number.isFinite(Number(live.my)) && Number.isFinite(Number(live.op))) candidates.push({my:Number(live.my),op:Number(live.op)});
+  const rowScore=savedMatchScoreFromRows(match);
+  if(rowScore) candidates.push(rowScore);
+  const title=String(match.title||'');
+  const m=title.match(/(\d+)\s*[-―ー－]\s*(\d+)\s*$/);
+  if(m) candidates.push({my:Number(m[1]),op:Number(m[2])});
+  if(!candidates.length) return null;
+  return candidates.sort((a,b)=>(b.my+b.op)-(a.my+a.op))[0];
+}
+function savedMatchDisplayTitle(match){
+  const raw=String(match&&match.title||'無題の試合');
+  const score=savedMatchFinalScore(match);
+  if(!score) return raw;
+  const base=raw.replace(/\s+\d+\s*[-―ー－]\s*\d+\s*$/,'').trim();
+  return `${base} ${score.my}-${score.op}`;
+}
+function savedMatchReportPayload(match){
+  const parsed=recoveryNormalizePayload(match.csv||match.parsed||match.data||match,match.fileName||match.title||'保存試合');
+  const finalScore=savedMatchFinalScore(match);
+  if(!finalScore || !Array.isArray(parsed.data)) return parsed;
+  const data=parsed.data.map(row=>({...row}));
+  if(data.length){
+    let target=-1;
+    for(let i=data.length-1;i>=0;i--){
+      const row=data[i]||{};
+      const no=String(row.No??row.no??'').trim();
+      if(no!=='SetterSummary' && no!=='SecondBallSummary'){ target=i; break; }
+    }
+    if(target>=0) data[target].Score=`${finalScore.my}-${finalScore.op}`;
+  }
+  return {...parsed,data,finalScore};
+}
 function loadSavedMatch(id){
   try{
     const m=getSavedMatches().find(x=>String(x.id)===String(id));
@@ -3178,8 +3232,7 @@ function loadSavedMatch(id){
     const dataManagement=document.getElementById('dataManagementCard');
     if(dataManagement) dataManagement.open=true;
 
-    const source=m.csv||m.parsed||m.data||m;
-    importedCsv=recoveryNormalizePayload(source,m.fileName||m.title||'保存済みデータ');
+    importedCsv=savedMatchReportPayload(m);
     try{ localStorage.setItem('vollyzeImportedCsv',JSON.stringify(importedCsv)); }catch(_){}
     renderCsvPreview(importedCsv,importedCsv.fileName||m.title||'保存済みデータ');
     const shown=showRestoredFullReport(importedCsv,m.title||'保存試合レポート');
@@ -3224,7 +3277,7 @@ function printSavedMatchPdf(id){
   try{
     const match=getSavedMatches().find(x=>String(x.id)===String(id));
     if(!match){ alert('保存データが見つかりません。'); return; }
-    const parsed=recoveryNormalizePayload(match.csv||match,match.fileName||match.title||'保存試合');
+    const parsed=savedMatchReportPayload(match);
     importedCsv=parsed;
     try{ localStorage.setItem('vollyzeImportedCsv',JSON.stringify(parsed)); }catch(_){}
     printCsvReport();
@@ -3270,7 +3323,7 @@ function renderSavedMatches(){
     const total=(m.summary && m.summary.total) ? m.summary.total : 0;
     return `<div class="savedMatchItem">
       <div>
-        <div class="savedMatchTitle">${escapeHtml(m.title||'無題の試合')}</div>
+        <div class="savedMatchTitle">${escapeHtml(savedMatchDisplayTitle(m))}</div>
         <div class="savedMatchMeta">${escapeHtml(date)}　${escapeHtml(m.fileName||'CSV')}　トス${total}本</div>
       </div>
       <div class="savedMatchActions">
@@ -3289,7 +3342,7 @@ function matchOptionLabel(m){
   const d=m.savedAt ? new Date(m.savedAt) : new Date();
   const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   const iq=(m.summary && m.summary.setterIq) ? m.summary.setterIq : '-';
-  return `${date}｜${m.title || m.fileName || '無題'}｜IQ ${iq}`;
+  return `${date}｜${savedMatchDisplayTitle(m) || m.fileName || '無題'}｜IQ ${iq}`;
 }
 function renderCompareSelectors(){
   const from=document.getElementById('compareFrom');
@@ -4026,7 +4079,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 
-// v17 CSV読み込み
+// v17 📥 試合データを取り込む
 let importedCsv = null;
 
 function parseCSVText(text){
